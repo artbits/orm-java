@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package com.github.artbits.jsqlite;
+package com.github.artbits.orm;
 
 import java.util.Objects;
 import java.util.Optional;
 
 final class SQLTemplate {
 
-    static <T> String create(Class<T> tClass) {
-        StringBuffer columnsString = new StringBuffer("id integer primary key,");
+    static <T> String create(Class<T> tClass, Config config) {
+        StringBuffer columnsString = new StringBuffer();
+        if (Objects.equals(config.driver, Config.Driver.SQLITE)) {
+            columnsString.append("id integer primary key autoincrement,");
+        }
+        if (Objects.equals(config.driver, Config.Driver.MYSQL)) {
+            columnsString.append("id int primary key auto_increment,");
+        }
         new Reflect<>(tClass).getDBColumnsWithType((column, type) -> {
             if (!Objects.equals(column, "id")) {
                 columnsString.append(column).append(" ").append(type).append(",");
@@ -30,17 +36,18 @@ final class SQLTemplate {
         });
         columnsString.deleteCharAt(columnsString.length() - 1);
         String tableName = tClass.getSimpleName().toLowerCase();
-        return $("create table %s (%s);", tableName, columnsString);
+        return $("create table if not exists %s (%s);", tableName, columnsString);
     }
 
 
-    static String addTableColumn(String tableName, String column, String type) {
+    static <T> String addColumn(Class<T> tClass, String column, String type) {
+        String tableName = tClass.getSimpleName().toLowerCase();
         return $("alter table %s add column %s %s;", tableName, column, type);
     }
 
 
     static <T> String drop(Class<T> tClass) {
-        return $("drop table %s;", tClass.getSimpleName().toLowerCase());
+        return $("drop table if exists %s;", tClass.getSimpleName().toLowerCase());
     }
 
 
@@ -131,8 +138,12 @@ final class SQLTemplate {
     }
 
 
-    static <T> String dropIndex(String index) {
-        return $("drop index %s", index);
+    static <T> String dropIndex(String tableName, String index) {
+        if (tableName == null) {
+            return $("drop index if exists %s", index);
+        } else {
+            return $("drop index %s on %s", index, tableName);
+        }
     }
 
 

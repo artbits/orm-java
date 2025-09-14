@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.artbits.jsqlite;
+package com.github.artbits.orm;
 
 import java.util.Arrays;
 

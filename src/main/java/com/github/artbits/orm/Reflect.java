@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package com.github.artbits.jsqlite;
+package com.github.artbits.orm;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
-import java.util.*;
+import java.sql.ResultSetMetaData;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import static com.github.artbits.jsqlite.Core.gson;
 
 final class Reflect<T> {
 
@@ -108,9 +110,6 @@ final class Reflect<T> {
             Field dbField = fieldMap.getOrDefault(fieldName, null);
             Object dbValue = (dbField != null) ? dbField.get(t) : null;
             if (dbField != null && dbValue != null) {
-                if (isJson(field)) {
-                    return String.format("'%s'", gson.toJson(dbValue));
-                }
                 switch (getDatabaseType(fieldName)) {
                     case "text": return String.format("'%s'", dbValue);
                     case "blob": return (Objects.equals(dbValue, true)) ? 1 : 0;
@@ -133,10 +132,6 @@ final class Reflect<T> {
 
     void getDBColumnsWithType(BiConsumer<String, String> consumer) {
         for (Field field : fieldMap.values()) {
-            if (isJson(field)) {
-                consumer.accept(field.getName(), "text");
-                continue;
-            }
             consumer.accept(field.getName(), getDatabaseType(field.getName()));
         }
     }
@@ -159,24 +154,19 @@ final class Reflect<T> {
     }
 
 
-    static <T> T toEntity(Class<T> tClass, Options options, ResultSet resultSet) {
+    static <T> T toEntity(Class<T> tClass, ResultSet resultSet) {
         try {
             Map<String, Boolean> columnsMap = new HashMap<>();
-            if (options != null && options.selectColumns != null && !Objects.equals(options.selectColumns, "*")) {
-                String[] columns = options.selectColumns.split(", ");
-                for (String column : columns) {
-                    columnsMap.put(column, true);
-                }
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int count = metaData.getColumnCount();
+            for (int i = 1; i <= count; i++) {
+                columnsMap.put(metaData.getColumnName(i), true);
             }
             T t = tClass.getConstructor(Consumer.class).newInstance((Consumer<T>) (c -> {}));
             Reflect<T> reflect = new Reflect<>(t);
             for (Field field : reflect.fieldMap.values()) {
                 String name = field.getName();
                 if (!columnsMap.isEmpty() && !columnsMap.getOrDefault(name, false)) {
-                    continue;
-                }
-                if (isJson(field)) {
-                    reflect.setValue(name, gson.fromJson(resultSet.getString(name), field.getType()));
                     continue;
                 }
                 String type = field.getType().getSimpleName().toLowerCase();
@@ -232,24 +222,6 @@ final class Reflect<T> {
             return column.index();
         }
         return false;
-    }
-
-
-    static boolean isJson(Field field) {
-        if (field.isAnnotationPresent(Column.class)) {
-            Column column = field.getAnnotation(Column.class);
-            return column.json();
-        }
-        return false;
-    }
-
-
-    static Column getColumn(Field field) {
-        if (field.isAnnotationPresent(Column.class)) {
-            return field.getAnnotation(Column.class);
-        } else {
-            return null;
-        }
     }
 
 }

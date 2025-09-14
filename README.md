@@ -3,12 +3,12 @@
 [![](https://img.shields.io/badge/license-Apache--2.0-%234377BF)](#license)
 
 
-## SQLite-Java
-``SQLite-Java`` is a Java ORM for SQLite databases. Using ``SQLite-JDBC`` as the driver at the bottom. It provides simple and efficient APIs without writing a large number of SQL statements. You only need to know the basics of SQL to get started.
+## ORM-Java
+``ORM-Java`` is an ORM used for SQLite or MySQL databases. Using ``JDBC`` as the driver at the bottom level. It provides a simple and efficient API without the need to write a large number of SQL statements. You only need to know the basics of SQL to get started.
 
 
 ## Features
- + Support for automatic table creation and addition columns.
+ + Support automatic creation of tables, addition of columns, and addition of indexes.
  + Provide APIs for adding, deleting, modifying, and querying.
  + Provides aggregate function APIs.
  + APIs are simple, elegant and efficient to use.
@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.artbits:sqlite-java:1.0.6'
+    implementation 'com.github.artbits:orm-java:2.0.0'
 }
 ```
 Maven:
@@ -34,16 +34,19 @@ Maven:
 
 <dependency>
     <groupId>com.github.artbits</groupId>
-    <artifactId>sqlite-java</artifactId>
-    <version>1.0.6</version>
+    <artifactId>orm-java</artifactId>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 
 ## Usage
-Let Java classes be mapped into database tables. extends ``DataSupport`` class. The fields ``id``, ``createdAt``, and ``updatedAt`` are internal fields, please read them only when using them.
+Let Java classes be mapped into database tables. The ``id`` field is a default required field.
 ```java
-public class User extends DataSupport<User> {
+public class User {
+    public Long id;
+    @Column(index = true)
+    public Long uid;
     public String name;
     public Integer age;
     public Boolean vip;
@@ -54,7 +57,8 @@ public class User extends DataSupport<User> {
 }
 
 
-public class Book extends DataSupport<Book> {
+public class Book {
+    public Long id;
     public String name;
     public String author;
     public Double price;
@@ -65,9 +69,13 @@ public class Book extends DataSupport<Book> {
 }
 ```
 
-Connect to the database and load tables (automatically add tables and columns).
+Connect to the database and load tables (automatically add tables, columns and index).
 ```java
-DB db = DB.connect("database/example.db");
+Config config = Config.of(c -> {
+    c.driver = Config.Driver.SQLITE;
+    c.url = "jdbc:sqlite:example.db";
+});
+DB db = DB.connect(config);
 db.tables(User.class, Book.class);
 ```
 
@@ -76,7 +84,7 @@ Insert data.
 // No need to set ID, ID will increase automatically when inserting data.
 User user = new User(u -> {u.name = "Lake"; u.age = 25; u.vip = true;});
 db.insert(user);
-user.printJson();
+DB.print(user);
 ```
 
 Update data.
@@ -166,6 +174,7 @@ int min2 = db.min(User.class, "age", "vip = ?", true).intValue();
 
 ## Links
 + Thanks: 
+    + [MySQL Connector/J](https://github.com/mysql/mysql-connector-j)
     + [SQLite-JDBC](https://github.com/xerial/sqlite-jdbc)
     + [QuickIO](https://github.com/artbits/quickio)
 

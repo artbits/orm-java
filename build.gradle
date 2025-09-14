@@ -3,17 +3,20 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.artbits'
-version = '1.0.8'
+group = 'com.github.artbits.orm-java'
+version = '2.0.0'
 
 repositories {
     maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
+    maven { url 'https://www.jitpack.io' }
 }
 
 dependencies {
-    implementation 'org.xerial:sqlite-jdbc:3.43.0.0'
-    implementation 'com.google.code.gson:gson:2.10.1'
-    testImplementation platform('org.junit:junit-bom:5.9.1')
+    implementation 'org.apache.commons:commons-dbcp2:2.13.0'
+    implementation 'com.mysql:mysql-connector-j:9.4.0'
+    implementation 'org.xerial:sqlite-jdbc:3.50.3.0'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
@@ -32,9 +35,4 @@ publishing {
             from components.java
         }
     }
-}
-
-wrapper {
-    gradleVersion = "8.0"
-    distributionType = Wrapper.DistributionType.ALL
 }

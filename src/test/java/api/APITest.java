@@ -1,9 +1,9 @@
-package api_test;
+package api;
 
-import com.github.artbits.jsqlite.Column;
-import com.github.artbits.jsqlite.DB;
-import com.github.artbits.jsqlite.DataSupport;
-import com.github.artbits.jsqlite.Options;
+import com.github.artbits.orm.Column;
+import com.github.artbits.orm.Config;
+import com.github.artbits.orm.DB;
+import com.github.artbits.orm.Options;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -13,38 +13,54 @@ import java.util.function.Consumer;
 public final class APITest {
 
 
-    public static class User extends DataSupport<User> {
+    public static class User {
+        public Long id;
         @Column(index = true)
         public Long uid;
         public String name;
         public Integer age;
         public Boolean vip;
-        @Column(json = true)
-        public List<String> labels;
 
         public User(Consumer<User> consumer) {
-            super(consumer);
+            consumer.accept(this);
         }
     }
 
 
-    public static class Book extends DataSupport<Book> {
+    public static class Book {
+        public Long id;
         public String name;
         public String author;
         public Double price;
 
         public Book(Consumer<Book> consumer) {
-            super(consumer);
+            consumer.accept(this);
         }
     }
 
 
-
     DB connect() {
-        DB db = DB.connect("database/example.db");
-        db.tables(User.class);
-//        db.deleteAll(User.class);
+        Config config = Config.of(c -> {
+            c.driver = Config.Driver.SQLITE;
+            c.url = "jdbc:sqlite:example.db";
+        });
+
+        DB db = DB.connect(config);
+        db.tables(User.class, Book.class);
+        db.deleteAll(User.class);
         return db;
+    }
+
+
+    @Test
+    void create() {
+        Config config = Config.of(c -> {
+            c.driver = Config.Driver.SQLITE;
+            c.url = "jdbc:sqlite:example.db";
+        });
+
+        DB db = DB.connect(config);
+        db.tables(User.class, Book.class);
     }
 
 
@@ -84,7 +100,12 @@ public final class APITest {
         DB db = connect();
         insert();
         User user = db.first(User.class);
-        db.update(user.set(u -> u.age = 60));
+        DB.print(user);
+
+        user.age = 60;
+        db.update(user, user.id);
+        user = db.first(User.class);
+        DB.print(user);
     }
 
 
@@ -103,7 +124,7 @@ public final class APITest {
         DB db = connect();
         insert();
         User user = db.findOne(User.class, 2L);
-        user.printJson();
+        DB.print(user);
     }
 
 
@@ -112,7 +133,7 @@ public final class APITest {
         DB db = connect();
         insert();
         User user = db.findOne(User.class, "name = ?", "user3");
-        user.printJson();
+        DB.print(user);
     }
 
 
@@ -121,7 +142,7 @@ public final class APITest {
         DB db = connect();
         insert();
         List<User> users = db.findAll(User.class);
-        users.forEach(DataSupport::printJson);
+        users.forEach(DB::print);
     }
 
 
@@ -130,7 +151,7 @@ public final class APITest {
         DB db = connect();
         insert();
         List<User> users = db.find(User.class, 2L, 1L);
-        users.forEach(DataSupport::printJson);
+        users.forEach(DB::print);
     }
 
 
@@ -139,7 +160,7 @@ public final class APITest {
         DB db = connect();
         insert();
         List<User> users = db.find(User.class, Arrays.asList(1L, 2L));
-        users.forEach(DataSupport::printJson);
+        users.forEach(DB::print);
     }
 
 
@@ -153,7 +174,7 @@ public final class APITest {
                 .order("age", Options.DESC)
                 .limit(5)
                 .offset(0));
-        users.forEach(DataSupport::printJson);
+        users.forEach(DB::print);
     }
 
 
@@ -168,6 +189,7 @@ public final class APITest {
     @Test
     void deleteByIdList() {
         DB db = connect();
+        insert();
         db.delete(User.class, Arrays.asList(1L, 4L));
     }
 
@@ -178,7 +200,6 @@ public final class APITest {
         insert();
         db.delete(User.class, "name = ?", "user3");
     }
-
 
 
     @Test
@@ -195,10 +216,10 @@ public final class APITest {
         insert();
 
         User user1 = db.first(User.class);
-        user1.printJson();
+        DB.print(user1);
 
         User user2 = db.first(User.class, "vip = ?", true);
-        user2.printJson();
+        DB.print(user2);
     }
 
 
@@ -208,10 +229,10 @@ public final class APITest {
         insert();
 
         User user1 = db.last(User.class);
-        user1.printJson();
+        DB.print(user1);
 
         User user2 = db.last(User.class, "vip = ?", false);
-        user2.printJson();
+        DB.print(user2);
     }
 
 
@@ -281,11 +302,9 @@ public final class APITest {
 
 
     @Test
-    void version() {
+    void drop() {
         DB db = connect();
-        String version = db.version();
-        System.out.println(version);
+        db.drop(User.class);
     }
-
 
 }
