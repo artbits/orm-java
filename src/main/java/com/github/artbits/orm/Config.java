@@ -19,24 +19,14 @@ package com.github.artbits.orm;
 import java.util.function.Consumer;
 
 public final class Config {
+
     public String url;
-    public String driver;
     public String username;
     public String password;
     public int initSize = 30;
     public int maxSize = 200;
     public int minIdle = 10;
     public int maxIdle = 20;
-
-
-    public interface Driver {
-        String SQLITE = "org.sqlite.JDBC";
-        String MYSQL = "com.mysql.cj.jdbc.Driver";
-//        String POSTGRESQL = "org.postgresql.Driver";
-//        String SQLSERVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-//        String ORACLE = "oracle.jdbc.driver.OracleDriver";
-//        String H2 = "org.h2.Driver";
-    }
 
 
     private Config() { }
@@ -47,4 +37,25 @@ public final class Config {
         consumer.accept(config);
         return config;
     }
+
+
+    int type() {
+        if (url.contains("sqlite")) {
+            return Type.SQLite;
+        } else if (url.contains("mysql")) {
+            return Type.MySQL;
+        } else if (url.contains("postgresql")) {
+            return Type.PostgreSQL;
+        } else {
+            return 0;
+        }
+    }
+
+
+    interface Type {
+        int SQLite = 1;
+        int MySQL = 2;
+        int PostgreSQL = 3;
+    }
+
 }

@@ -56,12 +56,7 @@ public final class Options {
                 if (o instanceof String || o instanceof Character) {
                     return String.format("'%s'", o);
                 } else {
-                    String s = String.valueOf(o);
-                    switch (s) {
-                        case "true": return "1";
-                        case "false": return "0";
-                        default: return s;
-                    }
+                    return String.valueOf(o);
                 }
             }).toArray());
         }

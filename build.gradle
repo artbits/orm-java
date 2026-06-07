@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.github.artbits.orm-java'
-version = '2.0.0'
+version = '2.1.0'
 
 repositories {
     maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation 'org.apache.commons:commons-dbcp2:2.13.0'
     implementation 'com.mysql:mysql-connector-j:9.4.0'
+    implementation 'org.postgresql:postgresql:42.7.11'
     implementation 'org.xerial:sqlite-jdbc:3.50.3.0'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')

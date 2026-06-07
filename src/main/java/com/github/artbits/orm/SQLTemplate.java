@@ -21,15 +21,18 @@ import java.util.Optional;
 
 final class SQLTemplate {
 
-    static <T> String create(Class<T> tClass, Config config) {
+    static <T> String create(Class<T> tClass) {
         StringBuffer columnsString = new StringBuffer();
-        if (Objects.equals(config.driver, Config.Driver.SQLITE)) {
+        if (Core.config.type() == Config.Type.SQLite) {
             columnsString.append("id integer primary key autoincrement,");
         }
-        if (Objects.equals(config.driver, Config.Driver.MYSQL)) {
+        if (Core.config.type() == Config.Type.MySQL) {
             columnsString.append("id int primary key auto_increment,");
         }
-        new Reflect<>(tClass).getDBColumnsWithType((column, type) -> {
+        if (Core.config.type() == Config.Type.PostgreSQL) {
+            columnsString.append("id bigserial primary key,");
+        }
+        new Reflect<>(tClass).getDatabaseColumnsWithType((column, type) -> {
             if (!Objects.equals(column, "id")) {
                 columnsString.append(column).append(" ").append(type).append(",");
             }
@@ -54,7 +57,7 @@ final class SQLTemplate {
     static <T> String insert(T t) {
         StringBuffer columnsString = new StringBuffer();
         StringBuffer valueString = new StringBuffer();
-        new Reflect<>(t).getDBColumnsWithValue((column, value) -> {
+        new Reflect<>(t).getDatabaseColumnsWithValue((column, value) -> {
             if (!Objects.equals(column, "id")) {
                 columnsString.append(column).append(",");
                 valueString.append(value).append(",");
@@ -71,7 +74,7 @@ final class SQLTemplate {
         String tableName = t.getClass().getSimpleName().toLowerCase();
         String whereString = (options.wherePredicate != null) ? $("where %s ", options.wherePredicate) : "";
         StringBuffer setString = new StringBuffer();
-        new Reflect<>(t).getDBColumnsWithValue((column, value) -> {
+        new Reflect<>(t).getDatabaseColumnsWithValue((column, value) -> {
             if (value != null && !Objects.equals(column, "id")) {
                 setString.append(column).append(" = ").append(value).append(",");
             }
@@ -134,7 +137,7 @@ final class SQLTemplate {
     static <T> String createIndex(Class<T> tClass, String column) {
         String table = tClass.getSimpleName().toLowerCase();
         String index = $("idx_%s_%s", table, column);
-        return $("create index %s on %s(%s)", index, table, column);
+        return $("create unique index %s on %s(%s)", index, table, column);
     }
 
 

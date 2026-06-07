@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 public final class APITest {
 
 
-    public static class User {
+    public static class Person {
         public Long id;
         @Column(index = true)
         public Long uid;
@@ -21,7 +21,7 @@ public final class APITest {
         public Integer age;
         public Boolean vip;
 
-        public User(Consumer<User> consumer) {
+        public Person(Consumer<Person> consumer) {
             consumer.accept(this);
         }
     }
@@ -40,57 +40,56 @@ public final class APITest {
 
 
     DB connect() {
-        Config config = Config.of(c -> {
-            c.driver = Config.Driver.SQLITE;
-            c.url = "jdbc:sqlite:example.db";
-        });
+        Config config = Config.of(c -> c.url = "jdbc:sqlite:example.db");
 
         DB db = DB.connect(config);
-        db.tables(User.class, Book.class);
-        db.deleteAll(User.class);
+        db.tables(Person.class, Book.class);
+        db.deleteAll(Person.class);
         return db;
     }
 
 
     @Test
     void create() {
-        Config config = Config.of(c -> {
-            c.driver = Config.Driver.SQLITE;
-            c.url = "jdbc:sqlite:example.db";
-        });
+        Config config = Config.of(c -> c.url = "jdbc:sqlite:example.db");
 
         DB db = DB.connect(config);
-        db.tables(User.class, Book.class);
+        db.tables(Person.class, Book.class);
     }
 
 
 
     @Test
     void insert() {
-        List<User> users = Arrays.asList(new User(u -> {
-            u.name = "user1";
-            u.age = 18;
-            u.vip = false;
-        }), new User(u -> {
-            u.name = "user2";
-            u.age = 20;
-            u.vip = true;
-        }), new User(u -> {
-            u.name = "user3";
-            u.age = 22;
-            u.vip = false;
-        }), new User(u -> {
-            u.name = "user4";
-            u.age = 24;
-            u.vip = true;
-        }), new User(u -> {
-            u.name = "user5";
-            u.age = 26;
-            u.vip = true;
+        List<Person> persons = Arrays.asList(new Person(p -> {
+            p.name = "user1";
+            p.uid = 1L;
+            p.age = 18;
+            p.vip = false;
+        }), new Person(p -> {
+            p.name = "user2";
+            p.uid = 2L;
+            p.age = 20;
+            p.vip = true;
+        }), new Person(p -> {
+            p.name = "user3";
+            p.uid = 3L;
+            p.age = 22;
+            p.vip = false;
+        }), new Person(p -> {
+            p.name = "user4";
+            p.uid = 4L;
+            p.age = 24;
+            p.vip = true;
+        }), new Person(p -> {
+            p.name = "user5";
+            p.uid = 5L;
+            p.age = 26;
+            p.vip = true;
         }));
 
         DB db = connect();
-        users.forEach(db::insert);
+        persons.forEach(db::insert);
     }
 
 
@@ -99,13 +98,13 @@ public final class APITest {
     void updateById() {
         DB db = connect();
         insert();
-        User user = db.first(User.class);
-        DB.print(user);
+        Person person = db.first(Person.class);
+        DB.print(person);
 
-        user.age = 60;
-        db.update(user, user.id);
-        user = db.first(User.class);
-        DB.print(user);
+        person.age = 60;
+        db.update(person, person.id);
+        person = db.first(Person.class);
+        DB.print(person);
     }
 
 
@@ -114,7 +113,7 @@ public final class APITest {
     void updateByCondition() {
         DB db = connect();
         insert();
-        db.update(new User(u -> u.age = 70), "name = ?", "user4");
+        db.update(new Person(p -> p.age = 70), "name = ?", "user4");
     }
 
 
@@ -123,8 +122,8 @@ public final class APITest {
     void findOneById() {
         DB db = connect();
         insert();
-        User user = db.findOne(User.class, 2L);
-        DB.print(user);
+        Person person = db.findOne(Person.class, 2L);
+        DB.print(person);
     }
 
 
@@ -132,8 +131,8 @@ public final class APITest {
     void findOneByCondition() {
         DB db = connect();
         insert();
-        User user = db.findOne(User.class, "name = ?", "user3");
-        DB.print(user);
+        Person person = db.findOne(Person.class, "name = ?", "user3");
+        DB.print(person);
     }
 
 
@@ -141,8 +140,8 @@ public final class APITest {
     void findAll() {
         DB db = connect();
         insert();
-        List<User> users = db.findAll(User.class);
-        users.forEach(DB::print);
+        List<Person> persons = db.findAll(Person.class);
+        persons.forEach(DB::print);
     }
 
 
@@ -150,8 +149,8 @@ public final class APITest {
     void findByIds() {
         DB db = connect();
         insert();
-        List<User> users = db.find(User.class, 2L, 1L);
-        users.forEach(DB::print);
+        List<Person> persons = db.find(Person.class, 2L, 1L);
+        persons.forEach(DB::print);
     }
 
 
@@ -159,8 +158,8 @@ public final class APITest {
     void findByIdList() {
         DB db = connect();
         insert();
-        List<User> users = db.find(User.class, Arrays.asList(1L, 2L));
-        users.forEach(DB::print);
+        List<Person> persons = db.find(Person.class, Arrays.asList(1L, 2L));
+        persons.forEach(DB::print);
     }
 
 
@@ -168,13 +167,13 @@ public final class APITest {
     void find() {
         DB db = connect();
         insert();
-        List<User> users = db.find(User.class, options -> options
+        List<Person> persons = db.find(Person.class, options -> options
                 .select("name", "age")
                 .where("age <= ? && vip = ?", 50, true)
                 .order("age", Options.DESC)
                 .limit(5)
                 .offset(0));
-        users.forEach(DB::print);
+        persons.forEach(DB::print);
     }
 
 
@@ -182,7 +181,7 @@ public final class APITest {
     void deleteAll() {
         DB db = connect();
         insert();
-        db.deleteAll(User.class);
+        db.deleteAll(Person.class);
     }
 
 
@@ -190,7 +189,7 @@ public final class APITest {
     void deleteByIdList() {
         DB db = connect();
         insert();
-        db.delete(User.class, Arrays.asList(1L, 4L));
+        db.delete(Person.class, Arrays.asList(1L, 4L));
     }
 
 
@@ -198,7 +197,7 @@ public final class APITest {
     void deleteByCondition() {
         DB db = connect();
         insert();
-        db.delete(User.class, "name = ?", "user3");
+        db.delete(Person.class, "name = ?", "user3");
     }
 
 
@@ -206,7 +205,7 @@ public final class APITest {
     void deleteByIds() {
         DB db = connect();
         insert();
-        db.delete(User.class, 4L);
+        db.delete(Person.class, 4L);
     }
 
 
@@ -215,11 +214,11 @@ public final class APITest {
         DB db = connect();
         insert();
 
-        User user1 = db.first(User.class);
-        DB.print(user1);
+        Person person1 = db.first(Person.class);
+        DB.print(person1);
 
-        User user2 = db.first(User.class, "vip = ?", true);
-        DB.print(user2);
+        Person person2 = db.first(Person.class, "vip = ?", true);
+        DB.print(person2);
     }
 
 
@@ -228,11 +227,11 @@ public final class APITest {
         DB db = connect();
         insert();
 
-        User user1 = db.last(User.class);
-        DB.print(user1);
+        Person person1 = db.last(Person.class);
+        DB.print(person1);
 
-        User user2 = db.last(User.class, "vip = ?", false);
-        DB.print(user2);
+        Person person2 = db.last(Person.class, "vip = ?", false);
+        DB.print(person2);
     }
 
 
@@ -241,10 +240,10 @@ public final class APITest {
         DB db = connect();
         insert();
 
-        long count1 = db.count(User.class);
+        long count1 = db.count(Person.class);
         System.out.println(count1);
 
-        long count2 = db.count(User.class, "vip = ?", true);
+        long count2 = db.count(Person.class, "vip = ?", true);
         System.out.println(count2);
     }
 
@@ -254,10 +253,10 @@ public final class APITest {
         DB db = connect();
         insert();
 
-        double d1 = db.average(User.class, "age");
+        double d1 = db.average(Person.class, "age");
         System.out.println(d1);
 
-        double d2 = db.average(User.class, "age", "vip = ?", false);
+        double d2 = db.average(Person.class, "age", "vip = ?", false);
         System.out.println(d2);
     }
 
@@ -267,10 +266,10 @@ public final class APITest {
         DB db = connect();
         insert();
 
-        int i1 = db.sum(User.class, "age").intValue();
+        int i1 = db.sum(Person.class, "age").intValue();
         System.out.println(i1);
 
-        int i2 = db.sum(User.class, "age", "vip = ?", false).intValue();
+        int i2 = db.sum(Person.class, "age", "vip = ?", false).intValue();
         System.out.println(i2);
     }
 
@@ -280,10 +279,10 @@ public final class APITest {
         DB db = connect();
         insert();
 
-        int age1 = db.max(User.class, "age").intValue();
+        int age1 = db.max(Person.class, "age").intValue();
         System.out.println(age1);
 
-        int age2 = db.max(User.class, "age", "vip = ?", false).intValue();
+        int age2 = db.max(Person.class, "age", "vip = ?", false).intValue();
         System.out.println(age2);
     }
 
@@ -293,10 +292,10 @@ public final class APITest {
         DB db = connect();
         insert();
 
-        int age1 = db.min(User.class, "age").intValue();
+        int age1 = db.min(Person.class, "age").intValue();
         System.out.println(age1);
 
-        int age2 = db.min(User.class, "age", "vip = ?", true).intValue();
+        int age2 = db.min(Person.class, "age", "vip = ?", true).intValue();
         System.out.println(age2);
     }
 
@@ -304,7 +303,7 @@ public final class APITest {
     @Test
     void drop() {
         DB db = connect();
-        db.drop(User.class);
+        db.drop(Person.class);
     }
 
 }

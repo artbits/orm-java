@@ -22,12 +22,12 @@ import java.util.function.Consumer;
 final class Core implements DB {
 
     private final Runner runner;
-    private final Config config;
+    public static Config config;
 
 
     Core(Config config) {
-        this.config = config;
-        runner = new Runner(config);
+        Core.config = config;
+        runner = new Runner();
         Runtime.getRuntime().addShutdownHook(new Thread(this::close));
     }
 
@@ -40,7 +40,7 @@ final class Core implements DB {
 
     @Override
     public void tables(Class<?>... classes) {
-        TableManager.init(runner, config, classes);
+        TableManager.init(runner, classes);
     }
 
 

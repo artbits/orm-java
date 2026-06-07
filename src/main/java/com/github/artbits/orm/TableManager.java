@@ -27,19 +27,19 @@ final class TableManager {
     private final static HashMap<String, String> indexTypeMap = new HashMap<>();
 
 
-    static void init(Runner runner, Config config, Class<?>... classes) {
+    static void init(Runner runner, Class<?>... classes) {
         for (Class<?> tClass : classes) {
-            createTable(runner, config, tClass);
+            createTable(runner, tClass);
             loadMetaData(runner, tClass);
             addColumn(runner, tClass);
             addIndex(runner, tClass);
         }
-        dropIndex(runner, config);
+        dropIndex(runner);
     }
 
 
-    private static void createTable(Runner runner, Config config, Class<?> tClass) {
-        runner.executeUpdate(SQLTemplate.create(tClass, config));
+    private static void createTable(Runner runner, Class<?> tClass) {
+        runner.executeUpdate(SQLTemplate.create(tClass));
     }
 
 
@@ -48,7 +48,7 @@ final class TableManager {
         HashMap<String, String> columnTypeMap = tableColumnTypeMap.getOrDefault(tableName, null);
         Reflect<?> reflect = new Reflect<>(tClass);
         if (columnTypeMap != null) {
-            reflect.getDBColumnsWithType((column, type) -> {
+            reflect.getDatabaseColumnsWithType((column, type) -> {
                 if (columnTypeMap.getOrDefault(column, null) == null) {
                     runner.executeUpdate(SQLTemplate.addColumn(tClass, column, type));
                 }
@@ -69,11 +69,15 @@ final class TableManager {
     }
 
 
-    private static void dropIndex(Runner runner, Config config) {
+    private static void dropIndex(Runner runner) {
         indexTypeMap.forEach((index, column) -> {
-            if (Objects.equals(config.driver, Config.Driver.SQLITE)) {
+            if (Core.config.type() == Config.Type.SQLite) {
                 runner.executeUpdate(SQLTemplate.dropIndex(null, index));
-            } else if (Objects.equals(config.driver, Config.Driver.MYSQL)) {
+            } else if (Core.config.type() == Config.Type.PostgreSQL) {
+                if (!index.contains("_pkey")) {
+                    runner.executeUpdate(SQLTemplate.dropIndex(null, index));
+                }
+            } else if (Core.config.type() == Config.Type.MySQL) {
                 if (!Objects.equals(index, "PRIMARY")) {
                     String tableName = index.replace("idx_", "").replace(("_" + column), "");
                     runner.executeUpdate(SQLTemplate.dropIndex(tableName, index));

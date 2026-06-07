@@ -21,26 +21,22 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 class Runner {
 
     private final BasicDataSource source = new BasicDataSource();
-    private final Config config;
 
 
-    Runner(Config config) {
+    Runner() {
         try {
-            this.config = config;
-            Class.forName(config.driver);
-            Optional.ofNullable(config.url).ifPresent(source::setUrl);
-            Optional.ofNullable(config.username).ifPresent(source::setUsername);
-            Optional.ofNullable(config.password).ifPresent(source::setPassword);
-            source.setInitialSize(config.initSize);
-            source.setMaxTotal(config.maxSize);
-            source.setMinIdle(config.minIdle);
-            source.setMaxIdle(config.maxIdle);
+            Optional.ofNullable(Core.config.url).ifPresent(source::setUrl);
+            Optional.ofNullable(Core.config.username).ifPresent(source::setUsername);
+            Optional.ofNullable(Core.config.password).ifPresent(source::setPassword);
+            source.setInitialSize(Core.config.initSize);
+            source.setMaxTotal(Core.config.maxSize);
+            source.setMinIdle(Core.config.minIdle);
+            source.setMaxIdle(Core.config.maxIdle);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -70,7 +66,7 @@ class Runner {
             if (statement.executeUpdate() == 0) {
                 return -1;
             }
-            if (Objects.equals(config.driver, Config.Driver.SQLITE)) {
+            if (Core.config.type() == Config.Type.SQLite) {
                 try (PreparedStatement statement1 = connection.prepareStatement("select last_insert_rowid()");
                      ResultSet set = statement1.executeQuery()) {
                     return set.next() ? set.getLong(1) : -1;

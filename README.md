@@ -4,7 +4,7 @@
 
 
 ## ORM-Java
-``ORM-Java`` is an ORM used for SQLite or MySQL databases. Using ``JDBC`` as the driver at the bottom level. It provides a simple and efficient API without the need to write a large number of SQL statements. You only need to know the basics of SQL to get started.
+``ORM-Java`` is an ORM used for SQLite, MySQL, PostgreSQL databases. Using ``JDBC`` as the driver at the bottom level. It provides a simple and efficient API without the need to write a large number of SQL statements. You only need to know the basics of SQL to get started.
 
 
 ## Features
@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.artbits:orm-java:2.0.0'
+    implementation 'com.github.artbits:orm-java:2.1.0'
 }
 ```
 Maven:
@@ -35,7 +35,7 @@ Maven:
 <dependency>
     <groupId>com.github.artbits</groupId>
     <artifactId>orm-java</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
@@ -71,10 +71,7 @@ public class Book {
 
 Connect to the database and load tables (automatically add tables, columns and index).
 ```java
-Config config = Config.of(c -> {
-    c.driver = Config.Driver.SQLITE;
-    c.url = "jdbc:sqlite:example.db";
-});
+Config config = Config.of(c -> c.url = "jdbc:sqlite:example.db");
 DB db = DB.connect(config);
 db.tables(User.class, Book.class);
 ```
@@ -173,7 +170,8 @@ int min2 = db.min(User.class, "age", "vip = ?", true).intValue();
 
 
 ## Links
-+ Thanks: 
++ Thanks:
+    + [PostgreSQL JDBC Driver](https://github.com/pgjdbc/pgjdbc)
     + [MySQL Connector/J](https://github.com/mysql/mysql-connector-j)
     + [SQLite-JDBC](https://github.com/xerial/sqlite-jdbc)
     + [QuickIO](https://github.com/artbits/quickio)

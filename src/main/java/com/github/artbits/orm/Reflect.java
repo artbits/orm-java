@@ -22,7 +22,6 @@ import java.sql.ResultSetMetaData;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -87,34 +86,65 @@ final class Reflect<T> {
 
 
     String getDatabaseType(String fieldName) {
-        switch (getType(fieldName).getSimpleName().toLowerCase()) {
-            case "int":
-            case "integer":
-            case "byte":
-            case "short":
-            case "long": return "integer";
-            case "float":
-            case "double": return "real";
-            case "char":
-            case "character":
-            case "string": return "text";
-            case "boolean" : return "blob";
-            default: throw new NullPointerException();
+        String type = getType(fieldName).getSimpleName().toLowerCase();
+        if (Core.config.type() == Config.Type.SQLite) {
+            switch (type) {
+                case "byte":
+                case "short":
+                case "int":
+                case "integer":
+                case "long":
+                case "boolean": return "integer";
+                case "float":
+                case "double": return "real";
+                case "char":
+                case "character":
+                case "string": return "text";
+                default: throw new NullPointerException();
+            }
+        } else if (Core.config.type() == Config.Type.MySQL) {
+            switch (type) {
+                case "byte": return "tinyint";
+                case "short": return "smallint";
+                case "int":
+                case "integer": return "int";
+                case "long": return "bigint";
+                case "float": return "float";
+                case "double": return "double";
+                case "char":
+                case "character":
+                case "string": return "text";
+                case "boolean": return "boolean";
+                default: throw new NullPointerException();
+            }
+        } else if (Core.config.type() == Config.Type.PostgreSQL) {
+            switch (type) {
+                case "byte":
+                case "short": return "smallint";
+                case "int":
+                case "integer": return "int";
+                case "long": return "bigint";
+                case "float": return "real";
+                case "double": return "double precision";
+                case "char":
+                case "character":
+                case "string": return "text";
+                case "boolean": return "boolean";
+                default: throw new NullPointerException();
+            }
+        } else {
+            throw new RuntimeException("Unsupported database type.");
         }
     }
 
 
-    Object getDBValue(Field field) {
+    Object getDatabaseValue(Field field) {
         try {
             String fieldName = field.getName();
             Field dbField = fieldMap.getOrDefault(fieldName, null);
             Object dbValue = (dbField != null) ? dbField.get(t) : null;
             if (dbField != null && dbValue != null) {
-                switch (getDatabaseType(fieldName)) {
-                    case "text": return String.format("'%s'", dbValue);
-                    case "blob": return (Objects.equals(dbValue, true)) ? 1 : 0;
-                    default: return dbValue;
-                }
+                return getDatabaseType(fieldName).equals("text") ? String.format("'%s'", dbValue) : dbValue;
             }
             return null;
         } catch (IllegalAccessException e) {
@@ -123,14 +153,14 @@ final class Reflect<T> {
     }
 
 
-    void getDBColumnsWithValue(BiConsumer<String, Object> consumer) {
+    void getDatabaseColumnsWithValue(BiConsumer<String, Object> consumer) {
         for (Field field : fieldMap.values()) {
-            consumer.accept(field.getName(), getDBValue(field));
+            consumer.accept(field.getName(), getDatabaseValue(field));
         }
     }
 
 
-    void getDBColumnsWithType(BiConsumer<String, String> consumer) {
+    void getDatabaseColumnsWithType(BiConsumer<String, String> consumer) {
         for (Field field : fieldMap.values()) {
             consumer.accept(field.getName(), getDatabaseType(field.getName()));
         }
